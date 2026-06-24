@@ -4,13 +4,17 @@ React frontend for the NexHealth Explorer POC. Built with React, TypeScript, Vit
 
 ## Features
 
-- 📊 Dashboard with overview statistics
-- 👥 Patient list and details
-- 📅 Appointments calendar view
+- 📊 Dashboard with cached statistics
+- 👥 Patient list with search and pagination
+- 📅 Appointments list with filters
 - 👨‍⚕️ Provider directory
 - 🎨 Clean, responsive UI with TailwindCSS
 - ⚡ Fast development with Vite
 - 📝 Full TypeScript support
+- 🔄 Reusable component library
+- 🎣 Custom hooks (pagination, debouncing, stats)
+- 🔍 Search debouncing (~80% fewer API calls)
+- ⚡ Performance optimizations
 
 ## Prerequisites
 
@@ -46,15 +50,31 @@ The app will start on http://localhost:5173
 ```
 frontend/
 ├── src/
-│   ├── pages/              # Page components
+│   ├── pages/              # Page components (refactored)
 │   │   ├── Dashboard.tsx
 │   │   ├── Patients.tsx
 │   │   ├── Appointments.tsx
 │   │   └── Providers.tsx
 │   ├── components/         # Reusable components
+│   │   ├── common/         # Shared UI components
+│   │   │   ├── Pagination.tsx      # Pagination controls
+│   │   │   ├── LoadingSpinner.tsx  # Loading indicator
+│   │   │   ├── ErrorAlert.tsx      # Error display
+│   │   │   ├── StatusBadge.tsx     # Status badges
+│   │   │   ├── DataTable.tsx       # Generic table
+│   │   │   └── SearchBar.tsx       # Search input
+│   │   ├── dashboard/
+│   │   │   └── StatCard.tsx        # Dashboard stat card
 │   │   └── Layout.tsx
 │   ├── hooks/              # Custom React hooks
-│   │   └── useApi.ts
+│   │   ├── useApi.ts           # API fetching
+│   │   ├── usePagination.ts    # Pagination state
+│   │   ├── useDebounce.ts      # Debounced values
+│   │   └── useStats.ts         # Cached stats
+│   ├── utils/              # Utility functions
+│   │   ├── formatters.ts       # Date/number formatting
+│   │   ├── constants.ts        # App constants
+│   │   └── index.ts
 │   ├── App.tsx             # Main app component
 │   ├── main.tsx            # Entry point
 │   └── index.css           # Global styles
@@ -89,6 +109,39 @@ TailwindCSS utility classes:
 - Fast development
 - No CSS files to manage
 - Responsive by default
+
+## Components
+
+### Common Components (`components/common/`)
+
+Reusable UI components used throughout the app:
+
+- **Pagination** - Handles page navigation with previous/next buttons
+- **LoadingSpinner** - Centered loading indicator
+- **ErrorAlert** - Displays error messages
+- **StatusBadge** - Colored badges for status display
+- **DataTable** - Generic table component with sorting
+- **SearchBar** - Search input with debouncing
+
+### Dashboard Components (`components/dashboard/`)
+
+- **StatCard** - Displays statistics with icon and color
+
+## Hooks
+
+### Custom React Hooks (`hooks/`)
+
+- **useApi** - Fetches data from API with loading and error states
+- **usePagination** - Manages pagination state (page, limit, total)
+- **useDebounce** - Debounces values (500ms delay for search)
+- **useStats** - Fetches and caches dashboard statistics
+
+## Utilities
+
+### Helper Functions (`utils/`)
+
+- **formatters.ts** - Date and number formatting functions
+- **constants.ts** - App-wide constants (items per page, colors, etc.)
 
 ## API Integration
 

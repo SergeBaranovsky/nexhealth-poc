@@ -1,23 +1,40 @@
+import { Link } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
-import type { Patient, Appointment, Provider } from '../../../shared/types';
+import { useStats } from '../hooks/useStats';
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { StatusBadge } from '../components/common/StatusBadge';
+import { StatCard } from '../components/dashboard/StatCard';
+import { formatName, formatDateTime } from '../utils/formatters';
+import type { Patient, Appointment } from '../../../shared/types';
 
 export function Dashboard() {
-  // Fetch total counts from stats endpoint
-  const { data: stats } = useApi<{ patients: { total: number }; appointments: { total: number }; providers: { total: number } }>('/stats');
-  
-  // Fetch recent/limited data for display
-  const { data: recentPatientsData, loading: patientsLoading } = useApi<{ data: { patients: Patient[] }; count: number }>('/patients?per_page=5');
-  const { data: upcomingAppointmentsData, loading: appointmentsLoading } = useApi<{ data: { appointments: Appointment[] }; count: number }>('/appointments?per_page=10');
-  const { data: providersData, loading: providersLoading } = useApi<{ data: { providers: Provider[] } }>('/providers');
+  // Fetch total counts from stats endpoint using centralized hook
+  const { patients, appointments, providers, loading: statsLoading } = useStats();
 
-  const patientCount = stats?.patients?.total || 0;
-  const appointmentCount = stats?.appointments?.total || 0;
-  const providerCount = stats?.providers?.total || 0;
-  
+  // Fetch recent/limited data for display
+  const { data: recentPatientsData, loading: patientsLoading } = useApi<{
+    data: { patients: Patient[] };
+    count: number;
+  }>('/api/patients?per_page=5');
+
+  const { data: upcomingAppointmentsData, loading: appointmentsLoading } =
+    useApi<{ data: { appointments: Appointment[] }; count: number }>(
+      '/api/appointments?per_page=10'
+    );
+
+  const patientCount = patients?.total || 0;
+  const appointmentCount = appointments?.total || 0;
+  const providerCount = providers?.total || 0;
+
   const recentPatients = recentPatientsData?.data?.patients || [];
   const upcomingAppointments = upcomingAppointmentsData?.data?.appointments || [];
-  
-  const isLoading = patientsLoading || appointmentsLoading || providersLoading;
+
+  const isLoading =
+    statsLoading || patientsLoading || appointmentsLoading;
+
+  if (isLoading) {
+    return <LoadingSpinner text="Loading dashboard..." />;
+  }
 
   return (
     <div>
@@ -28,19 +45,25 @@ export function Dashboard() {
         <StatCard
           title="Total Patients"
           value={patientCount}
-          icon="👥"
+          link="/patients"
+          linkText="View Patients"
+          icon={<span className="text-4xl">👥</span>}
           color="blue"
         />
         <StatCard
           title="Appointments"
           value={appointmentCount}
-          icon="📅"
+          link="/appointments"
+          linkText="View Appointments"
+          icon={<span className="text-4xl">📅</span>}
           color="green"
         />
         <StatCard
           title="Providers"
           value={providerCount}
-          icon="👨‍⚕️"
+          link="/providers"
+          linkText="View Providers"
+          icon={<span className="text-4xl">👨‍⚕️</span>}
           color="purple"
         />
       </div>
@@ -52,35 +75,37 @@ export function Dashboard() {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Recent Patients
           </h2>
-          {isLoading ? (
-            <p className="text-gray-500">Loading...</p>
-          ) : recentPatients.length === 0 ? (
+          {recentPatients.length === 0 ? (
             <p className="text-gray-500">No patients found</p>
           ) : (
             <div className="space-y-3">
               {recentPatients.map((patient) => (
-                <div key={patient.id} className="flex items-center justify-between border-b pb-2">
+                <div
+                  key={patient.id}
+                  className="flex items-center justify-between border-b pb-2"
+                >
                   <div>
                     <p className="font-medium text-gray-900">
-                      {patient.first_name} {patient.last_name}
+                      {formatName(patient.first_name, patient.last_name)}
                     </p>
-                    <p className="text-sm text-gray-500">{patient.email}</p>
+                    <p className="text-sm text-gray-500">
+                      {patient.email || '-'}
+                    </p>
                   </div>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    patient.inactive ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                  }`}>
-                    {patient.inactive ? 'Inactive' : 'Active'}
-                  </span>
+                  <StatusBadge
+                    status={patient.inactive ? 'inactive' : 'active'}
+                    label={patient.inactive ? 'Inactive' : 'Active'}
+                  />
                 </div>
               ))}
             </div>
           )}
-          <a
-            href="/patients"
+          <Link
+            to="/patients"
             className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-700"
           >
             View all patients →
-          </a>
+          </Link>
         </div>
 
         {/* Upcoming Appointments */}
@@ -88,39 +113,49 @@ export function Dashboard() {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Upcoming Appointments
           </h2>
-          {isLoading ? (
-            <p className="text-gray-500">Loading...</p>
-          ) : upcomingAppointments.length === 0 ? (
+          {upcomingAppointments.length === 0 ? (
             <p className="text-gray-500">No appointments found</p>
           ) : (
             <div className="space-y-3">
               {upcomingAppointments.slice(0, 5).map((appt) => (
-                <div key={appt.id} className="flex items-center justify-between border-b pb-2">
+                <div
+                  key={appt.id}
+                  className="flex items-center justify-between border-b pb-2"
+                >
                   <div>
                     <p className="font-medium text-gray-900">
                       {appt.provider_name || `Provider ${appt.provider_id}`}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {new Date(appt.start_time).toLocaleString()}
+                      {formatDateTime(appt.start_time)}
                     </p>
                   </div>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    appt.cancelled ? 'bg-red-100 text-red-800' :
-                    appt.confirmed ? 'bg-green-100 text-green-800' :
-                    'bg-blue-100 text-blue-800'
-                  }`}>
-                    {appt.cancelled ? 'Cancelled' : appt.confirmed ? 'Confirmed' : 'Pending'}
-                  </span>
+                  <StatusBadge
+                    status={
+                      appt.cancelled
+                        ? 'cancelled'
+                        : appt.confirmed
+                        ? 'confirmed'
+                        : 'pending'
+                    }
+                    label={
+                      appt.cancelled
+                        ? 'Cancelled'
+                        : appt.confirmed
+                        ? 'Confirmed'
+                        : 'Pending'
+                    }
+                  />
                 </div>
               ))}
             </div>
           )}
-          <a
-            href="/appointments"
+          <Link
+            to="/appointments"
             className="mt-4 inline-flex items-center text-green-600 hover:text-green-700"
           >
             View all appointments →
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -130,38 +165,10 @@ export function Dashboard() {
           🎉 NexHealth Explorer POC
         </h2>
         <p className="text-gray-700">
-          This proof-of-concept displays real data from the NexHealth sandbox environment.
-          Use the navigation above to explore patients, appointments, and providers with full search and filtering capabilities.
+          This proof-of-concept displays real data from the NexHealth sandbox
+          environment. Use the navigation above to explore patients, appointments,
+          and providers with full search and filtering capabilities.
         </p>
-      </div>
-    </div>
-  );
-}
-
-interface StatCardProps {
-  title: string;
-  value: number;
-  icon: string;
-  color: 'blue' | 'green' | 'purple';
-}
-
-function StatCard({ title, value, icon, color }: StatCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    purple: 'bg-purple-50 text-purple-600',
-  };
-
-  return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value.toLocaleString()}</p>
-        </div>
-        <div className={`text-4xl ${colorClasses[color]} w-16 h-16 rounded-full flex items-center justify-center`}>
-          {icon}
-        </div>
       </div>
     </div>
   );

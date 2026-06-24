@@ -163,6 +163,9 @@ The POC has been tested and verified to:
 The backend exposes these endpoints:
 
 - `GET /api/stats` - Get total counts for dashboard (patients, appointments, providers)
+  - **Note:** Uses `per_page=1000` workaround due to NexHealth API limitation (no `total_count` field)
+  - Cached for 5 minutes to minimize API load
+  - See `explorer/backend/README.md` for detailed explanation
 - `GET /api/patients` - List patients (supports ?page, ?per_page)
 - `GET /api/patients/:id` - Get single patient
 - `GET /api/appointments` - List appointments (supports ?start, ?end, ?page, ?per_page)
@@ -197,6 +200,7 @@ This is a POC focused on core functionality. Future enhancements could include:
 3. **TypeScript Full-Stack** - Shared types between frontend and backend reduce bugs
 4. **Hono over Express** - Lighter, faster, better TypeScript support out of the box
 5. **No Database** - All data fetched directly from NexHealth API (stateless)
+6. **Stats Workaround** - Using `per_page=1000` for stats because NexHealth API v20240412 doesn't provide `total_count` in responses (see backend README for details)
 
 ### Adding New Features
 

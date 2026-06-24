@@ -6,24 +6,20 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
-import * as dotenv from 'dotenv';
 import { NexHealthClient } from './nexhealth';
+import { config, validateConfig } from './config';
+import { asyncHandler, globalErrorHandler } from './middleware/errorHandler';
+import { createStatsRoutes } from './routes/stats';
+import { createPatientsRoutes } from './routes/patients';
+import { createAppointmentsRoutes } from './routes/appointments';
+import { createProvidersRoutes } from './routes/providers';
 
-// Load environment variables
-dotenv.config();
-
-// Validate required environment variables
-const requiredEnvVars = [
-  'NEXHEALTH_API_KEY',
-  'NEXHEALTH_SUBDOMAIN',
-  'NEXHEALTH_LOCATION_ID',
-];
-
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    console.error(`Error: Missing required environment variable: ${envVar}`);
-    process.exit(1);
-  }
+// Validate configuration on startup
+try {
+  validateConfig();
+} catch (error) {
+  console.error('Configuration error:', error instanceof Error ? error.message : error);
+  process.exit(1);
 }
 
 // Initialize Hono app
@@ -31,17 +27,21 @@ const app = new Hono();
 
 // CORS middleware
 app.use('/*', cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: config.server.corsOrigin,
   credentials: true,
 }));
 
-// Initialize NexHealth client
+// Initialize NexHealth client with caching, timeout, and retry configuration
 const nexhealth = new NexHealthClient({
-  apiKey: process.env.NEXHEALTH_API_KEY!,
-  subdomain: process.env.NEXHEALTH_SUBDOMAIN!,
-  locationId: process.env.NEXHEALTH_LOCATION_ID!,
-  baseUrl: process.env.NEXHEALTH_BASE_URL,
-  apiVersion: process.env.NEXHEALTH_API_VERSION,
+  apiKey: config.nexhealth.apiKey,
+  subdomain: config.nexhealth.subdomain,
+  locationId: config.nexhealth.locationId,
+  baseUrl: config.nexhealth.baseUrl,
+  apiVersion: config.nexhealth.apiVersion,
+  timeout: config.request.timeout,
+  maxRetries: config.request.maxRetries,
+  retryDelay: config.request.retryDelay,
+  cacheTTL: config.cache.requestTTL,
 });
 
 // Authenticate on startup
@@ -67,169 +67,32 @@ app.get('/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Stats endpoint - returns total counts
-app.get('/api/stats', async (c) => {
-  try {
-    await ensureAuthenticated();
-    
-    // Fetch all records to get accurate counts
-    const patientsData = await nexhealth.getPatients({ per_page: 1000 });
-    const appointmentsData = await nexhealth.getAppointments({ per_page: 1000 });
-    const providersData = await nexhealth.getProviders();
-    
-    return c.json({
-      patients: {
-        total: patientsData.count || 0
-      },
-      appointments: {
-        total: appointmentsData.count || 0
-      },
-      providers: {
-        total: providersData.data.providers?.length || 0
-      }
-    });
-  } catch (error) {
-    console.error('Stats error:', error);
-    return c.json({ error: 'Failed to fetch stats' }, 500);
-  }
-});
-
 // Institution endpoint
-app.get('/api/institution', async (c) => {
-  try {
-    await ensureAuthenticated();
-    const data = await nexhealth.getInstitution();
-    return c.json(data);
-  } catch (error) {
-    console.error('Institution error:', error);
-    return c.json({ error: 'Failed to fetch institution data' }, 500);
-  }
-});
+app.get('/api/institution', asyncHandler(async (c) => {
+  await ensureAuthenticated();
+  const data = await nexhealth.getInstitution();
+  return c.json(data);
+}));
 
-// Patients endpoints
-app.get('/api/patients', async (c) => {
-  try {
-    await ensureAuthenticated();
-    
-    const page = c.req.query('page');
-    const perPage = c.req.query('per_page');
-    
-    const data = await nexhealth.getPatients({
-      page: page ? parseInt(page) : undefined,
-      per_page: perPage ? parseInt(perPage) : undefined,
-    });
-    
-    return c.json(data);
-  } catch (error) {
-    console.error('Patients error:', error);
-    return c.json({ error: 'Failed to fetch patients' }, 500);
-  }
-});
-
-app.get('/api/patients/:id', async (c) => {
-  try {
-    await ensureAuthenticated();
-    
-    const id = c.req.param('id');
-    const data = await nexhealth.getPatient(id);
-    
-    return c.json(data);
-  } catch (error) {
-    console.error('Patient detail error:', error);
-    return c.json({ error: 'Failed to fetch patient details' }, 500);
-  }
-});
-
-// Appointments endpoint
-app.get('/api/appointments', async (c) => {
-  try {
-    await ensureAuthenticated();
-    
-    const start = c.req.query('start');
-    const end = c.req.query('end');
-    const page = c.req.query('page');
-    const perPage = c.req.query('per_page');
-    
-    const data = await nexhealth.getAppointments({
-      start,
-      end,
-      page: page ? parseInt(page) : undefined,
-      per_page: perPage ? parseInt(perPage) : undefined,
-    });
-    
-    return c.json(data);
-  } catch (error) {
-    console.error('Appointments error:', error);
-    return c.json({ error: 'Failed to fetch appointments' }, 500);
-  }
-});
-
-// Providers endpoint
-app.get('/api/providers', async (c) => {
-  try {
-    await ensureAuthenticated();
-    const data = await nexhealth.getProviders();
-    return c.json(data);
-  } catch (error) {
-    console.error('Providers error:', error);
-    return c.json({ error: 'Failed to fetch providers' }, 500);
-  }
-});
-
-// Appointment types endpoint
-app.get('/api/appointment-types', async (c) => {
-  try {
-    await ensureAuthenticated();
-    const data = await nexhealth.getAppointmentTypes();
-    return c.json(data);
-  } catch (error) {
-    console.error('Appointment types error:', error);
-    return c.json({ error: 'Failed to fetch appointment types' }, 500);
-  }
-});
-
-// Available slots endpoint
-app.get('/api/available-slots', async (c) => {
-  try {
-    await ensureAuthenticated();
-    
-    const providerId = c.req.query('provider_id');
-    const appointmentTypeId = c.req.query('appointment_type_id');
-    const startDate = c.req.query('start_date');
-    const days = c.req.query('days');
-    
-    const data = await nexhealth.getAvailableSlots({
-      provider_id: providerId,
-      appointment_type_id: appointmentTypeId,
-      start_date: startDate,
-      days: days ? parseInt(days) : undefined,
-    });
-    
-    return c.json(data);
-  } catch (error) {
-    console.error('Available slots error:', error);
-    return c.json({ error: 'Failed to fetch available slots' }, 500);
-  }
-});
+// Mount route modules
+app.route('/api/stats', createStatsRoutes(nexhealth, ensureAuthenticated));
+app.route('/api/patients', createPatientsRoutes(nexhealth, ensureAuthenticated));
+app.route('/api/appointments', createAppointmentsRoutes(nexhealth, ensureAuthenticated));
+app.route('/api/providers', createProvidersRoutes(nexhealth, ensureAuthenticated));
 
 // 404 handler
 app.notFound((c) => {
   return c.json({ error: 'Not Found' }, 404);
 });
 
-// Error handler
-app.onError((err, c) => {
-  console.error('Unhandled error:', err);
-  return c.json({ error: 'Internal Server Error' }, 500);
-});
+// Global error handler
+app.onError(globalErrorHandler);
 
 // Start server
-const port = parseInt(process.env.PORT || '8000');
-
 console.log(`Starting NexHealth Explorer Backend...`);
-console.log(`Server running on http://localhost:${port}`);
+console.log(`Server running on http://localhost:${config.server.port}`);
 
 serve({
   fetch: app.fetch,
-  port,
+  port: config.server.port,
 });

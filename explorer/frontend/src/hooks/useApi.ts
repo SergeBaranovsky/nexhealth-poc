@@ -25,7 +25,7 @@ export function useApi<T>(url: string, skip = false): UseApiResult<T> {
       setError(null);
 
       try {
-        const response = await fetch(`/api${url}`);
+        const response = await fetch(url);
         
         if (!response.ok) {
           throw new Error(`API error: ${response.status} ${response.statusText}`);

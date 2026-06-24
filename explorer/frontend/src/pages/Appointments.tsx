@@ -1,49 +1,106 @@
 import { useState } from 'react';
 import { useApi } from '../hooks/useApi';
+import { usePagination } from '../hooks/usePagination';
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { ErrorAlert } from '../components/common/ErrorAlert';
+import { DataTable, type Column } from '../components/common/DataTable';
+import { StatusBadge } from '../components/common/StatusBadge';
+import { Pagination } from '../components/common/Pagination';
+import { formatDateTime } from '../utils/formatters';
 import type { Appointment } from '../../../shared/types';
 
 export function Appointments() {
-  const [page, setPage] = useState(1);
   const [dateRange, setDateRange] = useState({
     start: new Date().toISOString().split('T')[0],
-    end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0],
   });
-  const perPage = 25;
-  
+
+  const { page, setPage, itemsPerPage } = usePagination();
+
   // Fetch total count from stats endpoint
-  const { data: stats } = useApi<{ appointments: { total: number } }>('/stats');
-  
-  const { data, loading, error } = useApi<{ data: { appointments: Appointment[] }; count: number }>(
-    `/appointments?page=${page}&per_page=${perPage}&start=${dateRange.start}&end=${dateRange.end}`
+  const { data: stats } = useApi<{ appointments: { total: number } }>('/api/stats');
+
+  const { data, loading, error, refetch } = useApi<{
+    data: { appointments: Appointment[] };
+    count: number;
+  }>(
+    `/api/appointments?page=${page}&per_page=${itemsPerPage}&start=${dateRange.start}&end=${dateRange.end}`
   );
 
+  const appointments = data?.data?.appointments || [];
+  const total = stats?.appointments?.total || 0;
+  const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
+
+  const handleDateChange = (field: 'start' | 'end', value: string) => {
+    setDateRange((prev) => ({ ...prev, [field]: value }));
+    setPage(1); // Reset to first page when filters change
+  };
+
+  // Get appointment status
+  const getAppointmentStatus = (
+    appointment: Appointment
+  ): 'cancelled' | 'confirmed' | 'pending' => {
+    if (appointment.cancelled) return 'cancelled';
+    if (appointment.confirmed) return 'confirmed';
+    return 'pending';
+  };
+
+  // Define table columns
+  const columns: Column<Appointment>[] = [
+    {
+      key: 'id',
+      header: 'ID',
+      render: (apt) => <span className="font-medium text-gray-900">{apt.id}</span>,
+    },
+    {
+      key: 'patient_id',
+      header: 'Patient ID',
+      render: (apt) => apt.patient_id,
+    },
+    {
+      key: 'provider_id',
+      header: 'Provider ID',
+      render: (apt) => apt.provider_id || '-',
+    },
+    {
+      key: 'start_time',
+      header: 'Start Time',
+      render: (apt) => formatDateTime(apt.start_time),
+    },
+    {
+      key: 'end_time',
+      header: 'End Time',
+      render: (apt) => formatDateTime(apt.end_time),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (apt) => {
+        const status = getAppointmentStatus(apt);
+        const labels = {
+          cancelled: 'Cancelled',
+          confirmed: 'Confirmed',
+          pending: 'Pending',
+        };
+        return <StatusBadge status={status} label={labels[status]} />;
+      },
+    },
+  ];
+
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-          <p className="mt-4 text-gray-600">Loading appointments...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner text="Loading appointments..." color="green" />;
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Error loading appointments: {error}</p>
-      </div>
+      <ErrorAlert
+        message={`Error loading appointments: ${error}`}
+        onRetry={refetch}
+      />
     );
   }
-
-  const appointments = data?.data?.appointments || [];
-  const total = stats?.appointments?.total || 0;
-  const totalPages = Math.ceil(total / perPage);
-
-  const handleDateChange = (field: 'start' | 'end', value: string) => {
-    setDateRange(prev => ({ ...prev, [field]: value }));
-    setPage(1); // Reset to first page when filters change
-  };
 
   return (
     <div>
@@ -82,100 +139,21 @@ export function Appointments() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Patient ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Provider ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Start Time
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                End Time
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {appointments.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                  No appointments found
-                </td>
-              </tr>
-            ) : (
-              appointments.map((appointment) => (
-                <tr key={appointment.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {appointment.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {appointment.patient_id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {appointment.provider_id || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(appointment.start_time).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(appointment.end_time).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      appointment.cancelled 
-                        ? 'bg-red-100 text-red-800'
-                        : appointment.confirmed
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {appointment.cancelled ? 'Cancelled' : appointment.confirmed ? 'Confirmed' : 'Pending'}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable<Appointment>
+        data={appointments}
+        columns={columns}
+        emptyMessage="No appointments found"
+      />
 
-      {/* Pagination */}
-      <div className="mt-6 bg-white rounded-lg shadow px-6 py-4">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          <div className="text-center">
-            <div className="text-sm text-gray-700 font-medium">
-              Showing {((page - 1) * perPage) + 1} to {Math.min(page * perPage, total)} of {total} appointments
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Page {page} of {totalPages}
-            </div>
-          </div>
-          <button
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={total}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setPage}
+        itemLabel="appointments"
+        variant="green"
+      />
     </div>
   );
 }

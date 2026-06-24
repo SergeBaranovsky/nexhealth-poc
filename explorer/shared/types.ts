@@ -83,3 +83,66 @@ export interface AuthResponse {
     token: string;
   };
 }
+
+/**
+ * Generic paginated API response
+ */
+export interface PaginatedResponse<T> {
+  data: T;
+  count: number;
+  page?: number;
+  per_page?: number;
+  total_pages?: number;
+}
+
+/**
+ * Stats endpoint response
+ */
+export interface StatsResponse {
+  patients: {
+    total: number;
+  };
+  appointments: {
+    total: number;
+  };
+  providers: {
+    total: number;
+  };
+}
+
+/**
+ * Patient filtering options
+ */
+export interface PatientFilters {
+  search?: string;
+  inactive?: boolean;
+  page?: number;
+  per_page?: number;
+}
+
+/**
+ * Appointment filtering options
+ */
+export interface AppointmentFilters {
+  start?: string;
+  end?: string;
+  provider_id?: number;
+  status?: AppointmentStatus;
+  page?: number;
+  per_page?: number;
+}
+
+/**
+ * Sort direction for sortable columns
+ */
+export type SortDirection = 'asc' | 'desc';
+
+/**
+ * Status types used across the application
+ */
+export type StatusType = 'active' | 'inactive' | 'confirmed' | 'pending' | 'cancelled';
+
+/**
+ * Appointment status (more specific than generic StatusType)
+ */
+export type AppointmentStatus = 'confirmed' | 'pending' | 'cancelled';

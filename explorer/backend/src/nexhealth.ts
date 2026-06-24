@@ -1,6 +1,11 @@
 /**
  * NexHealth API Client
  * Ported from Python reference implementation
+ * 
+ * Enhanced with:
+ * - Request caching with TTL
+ * - Request timeout (10s default)
+ * - Retry logic with exponential backoff (3 retries default)
  */
 
 import type {
@@ -16,6 +21,10 @@ import type {
 
 const DEFAULT_BASE_URL = 'https://nexhealth.info';
 const DEFAULT_API_VERSION = 'v20240412';
+const DEFAULT_TIMEOUT = 10000; // 10 seconds
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_RETRY_DELAY = 1000; // 1 second base delay
+const DEFAULT_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
 interface NexHealthConfig {
   apiKey: string;
@@ -23,10 +32,19 @@ interface NexHealthConfig {
   locationId: string;
   baseUrl?: string;
   apiVersion?: string;
+  timeout?: number;
+  maxRetries?: number;
+  retryDelay?: number;
+  cacheTTL?: number;
 }
 
 interface RequestParams {
   [key: string]: string | number | boolean | undefined;
+}
+
+interface CacheEntry<T> {
+  data: T;
+  expires: number;
 }
 
 export class NexHealthClient {
@@ -36,6 +54,11 @@ export class NexHealthClient {
   private baseUrl: string;
   private apiVersion: string;
   private token: string | null = null;
+  private timeout: number;
+  private maxRetries: number;
+  private retryDelay: number;
+  private cacheTTL: number;
+  private cache: Map<string, CacheEntry<any>> = new Map();
 
   constructor(config: NexHealthConfig) {
     this.apiKey = config.apiKey;
@@ -43,6 +66,10 @@ export class NexHealthClient {
     this.locationId = config.locationId;
     this.baseUrl = config.baseUrl || DEFAULT_BASE_URL;
     this.apiVersion = config.apiVersion || DEFAULT_API_VERSION;
+    this.timeout = config.timeout || DEFAULT_TIMEOUT;
+    this.maxRetries = config.maxRetries || DEFAULT_MAX_RETRIES;
+    this.retryDelay = config.retryDelay || DEFAULT_RETRY_DELAY;
+    this.cacheTTL = config.cacheTTL || DEFAULT_CACHE_TTL;
   }
 
   private getHeaders(): Record<string, string> {
@@ -81,18 +108,147 @@ export class NexHealthClient {
     return url.toString();
   }
 
+  /**
+   * Generate cache key from method, endpoint, and params
+   */
+  private getCacheKey(method: string, endpoint: string, params?: RequestParams): string {
+    const paramStr = params ? JSON.stringify(params) : '';
+    return `${method}:${endpoint}:${paramStr}`;
+  }
+
+  /**
+   * Get cached response if available and not expired
+   */
+  private getCached<T>(key: string): T | null {
+    const cached = this.cache.get(key);
+    
+    if (!cached) {
+      return null;
+    }
+    
+    if (Date.now() >= cached.expires) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return cached.data as T;
+  }
+
+  /**
+   * Store response in cache with TTL
+   */
+  private setCached<T>(key: string, data: T, ttl?: number): void {
+    const expires = Date.now() + (ttl || this.cacheTTL);
+    this.cache.set(key, { data, expires });
+  }
+
+  /**
+   * Clear all cached responses
+   */
+  public clearCache(): void {
+    this.cache.clear();
+  }
+
+  /**
+   * Clear specific cache entry
+   */
+  public clearCacheEntry(method: string, endpoint: string, params?: RequestParams): void {
+    const key = this.getCacheKey(method, endpoint, params);
+    this.cache.delete(key);
+  }
+
+  /**
+   * Sleep utility for retry delays
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Make HTTP request with caching, timeout, and retry logic
+   * - GET requests are cached for cacheTTL (default 2 minutes)
+   * - Requests timeout after timeout ms (default 10 seconds)
+   * - Failed requests are retried up to maxRetries times with exponential backoff
+   */
   private async request<T>(
     method: string,
     endpoint: string,
     params?: RequestParams
   ): Promise<ApiResponse<T>> {
+    // Check cache for GET requests
+    if (method === 'GET') {
+      const cacheKey = this.getCacheKey(method, endpoint, params);
+      const cached = this.getCached<ApiResponse<T>>(cacheKey);
+      
+      if (cached) {
+        return cached;
+      }
+    }
+
+    // Retry loop with exponential backoff
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        const response = await this.makeRequestWithTimeout(method, endpoint, params);
+        
+        // Cache successful GET requests
+        if (method === 'GET') {
+          const cacheKey = this.getCacheKey(method, endpoint, params);
+          this.setCached(cacheKey, response);
+        }
+        
+        return response;
+      } catch (error) {
+        lastError = error as Error;
+        
+        // Don't retry on last attempt
+        if (attempt === this.maxRetries) {
+          break;
+        }
+        
+        // Don't retry on 4xx errors (client errors)
+        if (error instanceof Error && error.message.includes('API request failed: 4')) {
+          break;
+        }
+        
+        // Calculate exponential backoff delay
+        const delay = this.retryDelay * Math.pow(2, attempt);
+        console.log(
+          `Request failed (attempt ${attempt + 1}/${this.maxRetries + 1}), ` +
+          `retrying in ${delay}ms...`
+        );
+        
+        await this.sleep(delay);
+      }
+    }
+
+    console.error(`Request failed for ${method} /${endpoint} after ${this.maxRetries + 1} attempts`);
+    throw lastError;
+  }
+
+  /**
+   * Make a single HTTP request with timeout
+   */
+  private async makeRequestWithTimeout<T>(
+    method: string,
+    endpoint: string,
+    params?: RequestParams
+  ): Promise<ApiResponse<T>> {
     const url = this.buildUrl(endpoint, params);
+    
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
       const response = await fetch(url, {
         method,
         headers: this.getHeaders(),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -119,7 +275,12 @@ export class NexHealthClient {
 
       return data;
     } catch (error) {
-      console.error(`Request failed for ${method} /${endpoint}:`, error);
+      clearTimeout(timeoutId);
+      
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${this.timeout}ms for ${method} /${endpoint}`);
+      }
+      
       throw error;
     }
   }
