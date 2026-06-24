@@ -2,13 +2,22 @@ import { useApi } from '../hooks/useApi';
 import type { Patient, Appointment, Provider } from '../../../shared/types';
 
 export function Dashboard() {
-  const { data: patientsData } = useApi<{ data: { patients: Patient[] }; count: number }>('/patients?per_page=5');
-  const { data: appointmentsData } = useApi<{ data: { appointments: Appointment[] }; count: number }>('/appointments?per_page=5');
-  const { data: providersData } = useApi<{ data: { providers: Provider[] } }>('/providers');
+  // Fetch total counts from stats endpoint
+  const { data: stats } = useApi<{ patients: { total: number }; appointments: { total: number }; providers: { total: number } }>('/stats');
+  
+  // Fetch recent/limited data for display
+  const { data: recentPatientsData, loading: patientsLoading } = useApi<{ data: { patients: Patient[] }; count: number }>('/patients?per_page=5');
+  const { data: upcomingAppointmentsData, loading: appointmentsLoading } = useApi<{ data: { appointments: Appointment[] }; count: number }>('/appointments?per_page=10');
+  const { data: providersData, loading: providersLoading } = useApi<{ data: { providers: Provider[] } }>('/providers');
 
-  const patientCount = patientsData?.count || 0;
-  const appointmentCount = appointmentsData?.count || 0;
-  const providerCount = providersData?.data?.providers?.length || 0;
+  const patientCount = stats?.patients?.total || 0;
+  const appointmentCount = stats?.appointments?.total || 0;
+  const providerCount = stats?.providers?.total || 0;
+  
+  const recentPatients = recentPatientsData?.data?.patients || [];
+  const upcomingAppointments = upcomingAppointmentsData?.data?.appointments || [];
+  
+  const isLoading = patientsLoading || appointmentsLoading || providersLoading;
 
   return (
     <div>
@@ -36,29 +45,94 @@ export function Dashboard() {
         />
       </div>
 
-      {/* Welcome Message */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Welcome to NexHealth Explorer
-        </h2>
-        <p className="text-gray-600 mb-4">
-          This is a simple proof-of-concept application for exploring NexHealth sandbox data.
-          Use the navigation above to browse patients, appointments, and providers.
-        </p>
-        <div className="flex gap-4">
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Recent Patients */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Recent Patients
+          </h2>
+          {isLoading ? (
+            <p className="text-gray-500">Loading...</p>
+          ) : recentPatients.length === 0 ? (
+            <p className="text-gray-500">No patients found</p>
+          ) : (
+            <div className="space-y-3">
+              {recentPatients.map((patient) => (
+                <div key={patient.id} className="flex items-center justify-between border-b pb-2">
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {patient.first_name} {patient.last_name}
+                    </p>
+                    <p className="text-sm text-gray-500">{patient.email}</p>
+                  </div>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    patient.inactive ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                  }`}>
+                    {patient.inactive ? 'Inactive' : 'Active'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
           <a
             href="/patients"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-700"
           >
-            Browse Patients →
-          </a>
-          <a
-            href="/appointments"
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-          >
-            View Appointments →
+            View all patients →
           </a>
         </div>
+
+        {/* Upcoming Appointments */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Upcoming Appointments
+          </h2>
+          {isLoading ? (
+            <p className="text-gray-500">Loading...</p>
+          ) : upcomingAppointments.length === 0 ? (
+            <p className="text-gray-500">No appointments found</p>
+          ) : (
+            <div className="space-y-3">
+              {upcomingAppointments.slice(0, 5).map((appt) => (
+                <div key={appt.id} className="flex items-center justify-between border-b pb-2">
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {appt.provider_name || `Provider ${appt.provider_id}`}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(appt.start_time).toLocaleString()}
+                    </p>
+                  </div>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    appt.cancelled ? 'bg-red-100 text-red-800' :
+                    appt.confirmed ? 'bg-green-100 text-green-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {appt.cancelled ? 'Cancelled' : appt.confirmed ? 'Confirmed' : 'Pending'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          <a
+            href="/appointments"
+            className="mt-4 inline-flex items-center text-green-600 hover:text-green-700"
+          >
+            View all appointments →
+          </a>
+        </div>
+      </div>
+
+      {/* Welcome Message */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          🎉 NexHealth Explorer POC
+        </h2>
+        <p className="text-gray-700">
+          This proof-of-concept displays real data from the NexHealth sandbox environment.
+          Use the navigation above to explore patients, appointments, and providers with full search and filtering capabilities.
+        </p>
       </div>
     </div>
   );

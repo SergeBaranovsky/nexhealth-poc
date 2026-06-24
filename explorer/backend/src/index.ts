@@ -67,6 +67,33 @@ app.get('/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Stats endpoint - returns total counts
+app.get('/api/stats', async (c) => {
+  try {
+    await ensureAuthenticated();
+    
+    // Fetch all records to get accurate counts
+    const patientsData = await nexhealth.getPatients({ per_page: 1000 });
+    const appointmentsData = await nexhealth.getAppointments({ per_page: 1000 });
+    const providersData = await nexhealth.getProviders();
+    
+    return c.json({
+      patients: {
+        total: patientsData.count || 0
+      },
+      appointments: {
+        total: appointmentsData.count || 0
+      },
+      providers: {
+        total: providersData.data.providers?.length || 0
+      }
+    });
+  } catch (error) {
+    console.error('Stats error:', error);
+    return c.json({ error: 'Failed to fetch stats' }, 500);
+  }
+});
+
 // Institution endpoint
 app.get('/api/institution', async (c) => {
   try {

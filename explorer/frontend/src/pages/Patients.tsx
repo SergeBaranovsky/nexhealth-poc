@@ -1,8 +1,19 @@
+import { useState } from 'react';
 import { useApi } from '../hooks/useApi';
 import type { Patient } from '../../../shared/types';
 
 export function Patients() {
-  const { data, loading, error } = useApi<{ data: { patients: Patient[] }; count: number }>('/patients?per_page=50');
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const perPage = 25;
+  
+  // Fetch total count from stats endpoint
+  const { data: stats } = useApi<{ patients: { total: number } }>('/stats');
+  
+  const { data, loading, error, refetch } = useApi<{ data: { patients: Patient[] }; count: number }>(
+    `/patients?page=${page}&per_page=${perPage}`
+  );
 
   if (loading) {
     return (
@@ -23,16 +34,63 @@ export function Patients() {
     );
   }
 
-  const patients = data?.data?.patients || [];
-  const total = data?.count || 0;
+  const allPatients = data?.data?.patients || [];
+  const total = stats?.patients?.total || 0;
+  
+  // Client-side search filter
+  const patients = searchQuery
+    ? allPatients.filter(p => 
+        p.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.email?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : allPatients;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchQuery(search);
+  };
+
+  const totalPages = Math.ceil(total / perPage);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Patients</h1>
         <div className="text-sm text-gray-600">
-          Showing {patients.length} of {total} patients
+          Page {page} of {totalPages} • {total} total patients
         </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6 bg-white rounded-lg shadow p-4">
+        <form onSubmit={handleSearch} className="flex gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or email..."
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Search
+          </button>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setSearchQuery('');
+              }}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </form>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -79,7 +137,7 @@ export function Patients() {
                     {patient.email || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {patient.phone || '-'}
+                    {patient.bio?.phone_number || patient.phone || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {patient.bio?.date_of_birth || '-'}
@@ -100,6 +158,34 @@ export function Patients() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="mt-6 bg-white rounded-lg shadow px-6 py-4">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+          <div className="text-center">
+            <div className="text-sm text-gray-700 font-medium">
+              Showing {((page - 1) * perPage) + 1} to {Math.min(page * perPage, total)} of {total} patients
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              Page {page} of {totalPages}
+            </div>
+          </div>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

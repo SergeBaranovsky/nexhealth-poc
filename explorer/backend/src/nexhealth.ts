@@ -112,6 +112,11 @@ export class NexHealthClient {
         return { data: {} as T };
       }
 
+      // If data has a nested 'data' array, extract count from it
+      if (data.data && Array.isArray(data.data)) {
+        return { ...data, count: data.count || data.data.length };
+      }
+
       return data;
     } catch (error) {
       console.error(`Request failed for ${method} /${endpoint}:`, error);
@@ -170,7 +175,15 @@ export class NexHealthClient {
       per_page: options.per_page || 25,
     };
 
-    return this.request('GET', 'patients', params);
+    const response = await this.request<Patient[]>('GET', 'patients', params);
+    
+    // Transform response to expected structure
+    return {
+      data: {
+        patients: Array.isArray(response.data) ? response.data : []
+      },
+      count: response.count || 0
+    };
   }
 
   /**
@@ -201,14 +214,30 @@ export class NexHealthClient {
       per_page: options.per_page || 25,
     };
 
-    return this.request('GET', 'appointments', params);
+    const response = await this.request<Appointment[]>('GET', 'appointments', params);
+    
+    // Transform response to expected structure
+    return {
+      data: {
+        appointments: Array.isArray(response.data) ? response.data : []
+      },
+      count: response.count || 0
+    };
   }
 
   /**
    * List providers
    */
   async getProviders(): Promise<ApiResponse<{ providers: Provider[] }>> {
-    return this.request('GET', 'providers', this.getBaseParams());
+    const response = await this.request<Provider[]>('GET', 'providers', this.getBaseParams());
+    
+    // Transform response to expected structure
+    return {
+      data: {
+        providers: Array.isArray(response.data) ? response.data : []
+      },
+      count: response.count || 0
+    };
   }
 
   /**

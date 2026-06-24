@@ -4,32 +4,42 @@
  */
 
 export interface Patient {
-  id: string;
+  id: number;
   first_name: string;
   last_name: string;
+  name?: string;
   email?: string;
   phone?: string;
   bio?: {
     date_of_birth?: string;
     gender?: string;
+    phone_number?: string;
   };
   inactive: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Appointment {
-  id: string;
-  patient_id: string;
-  provider_id?: string;
+  id: number;
+  patient_id: number;
+  provider_id?: number;
+  provider_name?: string;
   start_time: string;
   end_time: string;
   status?: string;
-  did_not_come?: boolean;
+  confirmed?: boolean;
+  patient_confirmed?: boolean;
+  cancelled?: boolean;
+  patient_missed?: boolean;
+  appointment_type_id?: number;
 }
 
 export interface Provider {
-  id: string;
+  id: number;
   first_name: string;
   last_name: string;
+  name?: string;
   npi?: string;
   email?: string;
 }
