@@ -101,7 +101,7 @@ app.get('/api/patients', async (req, res) => {
 });
 ```
 
-#### Option 2: Hono (Modern, Fast) ⭐ **RECOMMENDED FOR POC**
+#### Option 2: Hono (Modern, Fast) **RECOMMENDED FOR POC**
 ```typescript
 // Modern, simple, fast, great TypeScript support
 import { Hono } from 'hono';
@@ -273,7 +273,7 @@ export interface Appointment {
 
 ---
 
-## 🎯 Current Status (Updated: June 23, 2026)
+## Current Status (Updated: June 23, 2026)
 
 ### ✅ Completed and Working
 - ✅ Backend API running (TypeScript + Hono on port 8000)
@@ -303,7 +303,7 @@ export interface Appointment {
 - Pagination controls
 - Status indicators (active/inactive, confirmed/pending/cancelled)
 
-### 📋 Future Enhancements (Not Required for POC)
+### Future Enhancements (Not Required for POC)
 - Patient detail view page
 - Advanced search with multiple filters
 - Sorting by column headers
@@ -314,7 +314,7 @@ export interface Appointment {
 - Production deployment
 - Appointment booking functionality
 
-### 🔧 Running the POC
+### Running the POC
 
 The POC is now fully functional! To run it:
 

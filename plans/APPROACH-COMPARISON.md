@@ -59,19 +59,19 @@ Data:     Native fetch API with useEffect
 - ❌ Advanced error handling and logging
 
 **Pros:**
-- ⚡ Very fast to set up and start coding
-- 🎯 Single language (TypeScript) for entire stack
-- 🔄 Share types between frontend and backend
-- 📦 Minimal dependencies = smaller bundle size
-- 🧠 Easier to understand and maintain initially
-- 💰 No infrastructure costs (run locally)
+- Very fast to set up and start coding
+- Single language (TypeScript) for entire stack
+- Share types between frontend and backend
+- Minimal dependencies = smaller bundle size
+- Easier to understand and maintain initially
+- No infrastructure costs (run locally)
 
 **Cons:**
-- 🚧 Not production-ready out of the box
-- 📈 Will need refactoring as complexity grows
-- 🧪 Limited testing infrastructure
-- 📊 No caching or optimization strategies
-- 🔒 Basic security (good for sandbox, not production)
+- Not production-ready out of the box
+- Will need refactoring as complexity grows
+- Limited testing infrastructure
+- No caching or optimization strategies
+- Basic security (good for sandbox, not production)
 
 **Timeline:**
 - Day 1-2: Setup both projects
@@ -111,20 +111,20 @@ Infra:    Docker + CI/CD + Redis (optional)
 - ✅ Monitoring and logging infrastructure
 
 **Pros:**
-- 🏗️ Production-ready from the start
-- 📊 Optimized for performance and scalability
-- 🧪 Comprehensive testing infrastructure
-- 🔐 Advanced security practices
-- 📈 Built for growth and feature additions
-- 🐍 Leverage existing Python expertise
+- Production-ready from the start
+- Optimized for performance and scalability
+- Comprehensive testing infrastructure
+- Advanced security practices
+- Built for growth and feature additions
+- Leverage existing Python expertise
 
 **Cons:**
-- ⏰ Longer timeline (4-6 weeks)
-- 🧩 More complex setup
-- 💰 Higher infrastructure costs
-- 📚 Steeper learning curve
-- 🔧 More dependencies to manage
-- 🌐 Two languages to maintain (Python + TypeScript)
+- Longer timeline (4-6 weeks)
+- More complex setup
+- Higher infrastructure costs
+- Steeper learning curve
+- More dependencies to manage
+- Two languages to maintain (Python + TypeScript)
 
 **Timeline:**
 - Week 1: Foundation & Setup

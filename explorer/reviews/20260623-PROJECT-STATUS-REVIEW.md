@@ -86,19 +86,19 @@ The project has successfully achieved its POC goals with a functional web applic
 
 ### 2.2 Missing Features (Expected for Full POC)
 
-#### **No Patient Detail View** 📋
+#### **No Patient Detail View**
 - **Status:** Mentioned in plans but not implemented
 - **Impact:** Cannot deeply inspect patient records
 - **Is it needed for POC?** 🟡 Depends on demo goals
 - **Effort:** ~2-4 hours to implement
 
-#### **No Sorting** 📋
+#### **No Sorting**
 - **Status:** Tables cannot be sorted by column
 - **Impact:** Users can't organize data by name, date, etc.
 - **Is it needed for POC?** 🟡 Nice to have
 - **Effort:** ~2-3 hours to implement
 
-#### **No Data Export** 📋
+#### **No Data Export**
 - **Status:** Cannot export to CSV, Excel, PDF
 - **Impact:** Users cannot take data out of the app
 - **Is it needed for POC?** 🟢 No - appropriate for POC to skip
@@ -111,17 +111,17 @@ The project has successfully achieved its POC goals with a functional web applic
 - **Impact:** Cannot deploy easily
 - **Is it needed for POC?** ✅ No - correctly skipped for POC
 
-#### **No CI/CD Pipeline** 🔄
+#### **No CI/CD Pipeline**
 - **Status:** No GitHub Actions or similar
 - **Impact:** Manual testing and deployment
 - **Is it needed for POC?** ✅ No - correctly skipped for POC
 
-#### **No Monitoring/Logging** 📊
+#### **No Monitoring/Logging**
 - **Status:** Console.log only, no structured logging
 - **Impact:** Cannot track usage or debug production issues
 - **Is it needed for POC?** ✅ No - correctly skipped for POC
 
-#### **No Rate Limiting** 🚦
+#### **No Rate Limiting**
 - **Status:** Backend makes unlimited requests
 - **Impact:** Could hit NexHealth API rate limits
 - **Is it needed for POC?** 🟡 Depends on usage patterns

@@ -4,17 +4,17 @@ Backend API server for the NexHealth Explorer POC. Built with Node.js, TypeScrip
 
 ## Features
 
-- 🔒 Secure API key management
-- 🔄 Automatic token authentication with NexHealth
-- 📡 RESTful API endpoints (modular routes)
-- 🚀 Fast and lightweight (Hono framework)
-- 📝 Full TypeScript support
-- ⚡ Request caching (2-minute TTL, 10-56x faster)
-- ⏱️ Request timeout protection (10 seconds)
-- 🔁 Retry logic with exponential backoff (3 retries)
-- 📊 Route-level caching for stats (100x faster)
-- 🛡️ Centralized error handling
-- ⚙️ Centralized configuration
+- Secure API key management
+- Automatic token authentication with NexHealth
+- RESTful API endpoints (modular routes)
+- Fast and lightweight (Hono framework)
+- Full TypeScript support
+- Request caching (2-minute TTL, 10-56x faster)
+- Request timeout protection (10 seconds)
+- Retry logic with exponential backoff (3 retries)
+- Route-level caching for stats (100x faster)
+- Centralized error handling
+- Centralized configuration
 
 ## Prerequisites
 

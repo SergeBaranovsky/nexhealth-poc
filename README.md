@@ -2,7 +2,7 @@
 
 A TypeScript full-stack web application for exploring NexHealth API sandbox data with an intuitive UI.
 
-## 🎯 Project Status: **FUNCTIONAL POC COMPLETE**
+## Project Status: **FUNCTIONAL POC COMPLETE**
 
 This is a working proof-of-concept that:
 - ✅ Connects to real NexHealth sandbox API
@@ -12,7 +12,7 @@ This is a working proof-of-concept that:
 - ✅ Includes date filtering on Appointments page
 - ✅ Shows real-time dashboard with stats and recent activity
 
-## 🏗️ Architecture
+## Architecture
 
 **Frontend:**
 - React 18 + TypeScript
@@ -27,7 +27,7 @@ This is a working proof-of-concept that:
 - Direct NexHealth API integration
 - CORS enabled for local development
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -70,7 +70,7 @@ npm run dev
 
 Then open http://localhost:5173 in your browser.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 nexhealth-poc/
@@ -101,7 +101,7 @@ nexhealth-poc/
 └── README.md             # This file
 ```
 
-## ✨ Features
+## Features
 
 ### Dashboard
 - **Real-time stats** - Patient count, appointment count, provider count
@@ -125,7 +125,7 @@ nexhealth-poc/
 - **Full provider list** - All providers in the system
 - **Provider details** - Name, NPI, email
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -147,7 +147,7 @@ NODE_ENV=development
 CORS_ORIGIN=http://localhost:5173
 ```
 
-## 🧪 Testing
+## Testing
 
 The POC has been tested and verified to:
 - ✅ Successfully authenticate with NexHealth API
@@ -158,7 +158,7 @@ The POC has been tested and verified to:
 - ✅ Filter appointments by date range
 - ✅ Search patients by name and email
 
-## 📊 API Endpoints
+## API Endpoints
 
 The backend exposes these endpoints:
 
@@ -174,7 +174,7 @@ The backend exposes these endpoints:
 - `GET /api/available-slots` - Find available time slots
 - `GET /health` - Health check endpoint
 
-## 🚧 What's NOT Included (Future Enhancements)
+## What's NOT Included (Future Enhancements)
 
 This is a POC focused on core functionality. Future enhancements could include:
 
@@ -191,7 +191,7 @@ This is a POC focused on core functionality. Future enhancements could include:
 - [ ] Loading skeletons instead of spinners
 - [ ] Optimistic UI updates
 
-## 📝 Development Notes
+## Development Notes
 
 ### Key Decisions
 
@@ -212,7 +212,7 @@ To add a new page:
 4. Add API endpoint in `backend/src/index.ts` if needed
 5. Add method in `backend/src/nexhealth.ts` if needed
 
-## 📚 Documentation
+## Documentation
 
 See the `plans/` directory for comprehensive planning documentation:
 
@@ -222,7 +222,7 @@ See the `plans/` directory for comprehensive planning documentation:
 - **02-features-and-ui-specification.md** - Feature specifications
 - **03-implementation-roadmap.md** - Development roadmap
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 **Backend won't start:**
 - Check that .env file exists and has correct credentials
@@ -238,10 +238,10 @@ See the `plans/` directory for comprehensive planning documentation:
 - Ensure CORS_ORIGIN in .env matches frontend URL
 - Restart backend after changing .env
 
-## 📄 License
+## License
 
 Internal POC - Not for public distribution
 
-## 👥 Contact
+## Contact
 
 For questions about this POC, see the planning documentation in the `plans/` folder.

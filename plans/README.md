@@ -2,7 +2,7 @@
 
 This folder contains comprehensive planning and design documentation for the NexHealth Sandbox Explorer web application.
 
-> **🚀 Not sure which approach to use?** Read the **[APPROACH-COMPARISON.md](./APPROACH-COMPARISON.md)** to decide between a quick POC (1 week) or full production app (4-6 weeks).
+> **Not sure which approach to use?** Read the **[APPROACH-COMPARISON.md](./APPROACH-COMPARISON.md)** to decide between a quick POC (1 week) or full production app (4-6 weeks).
 
 ## Purpose
 
@@ -10,7 +10,7 @@ The NexHealth Sandbox Explorer is a web-based application that provides a visual
 
 ## Documentation Index
 
-### ⚡ POC Quick Start (RECOMMENDED)
+### POC Quick Start (RECOMMENDED)
 
 **[04-simplified-poc-architecture.md](./04-simplified-poc-architecture.md)** ⭐
 - **Simplified TypeScript full-stack approach**
@@ -21,7 +21,7 @@ The NexHealth Sandbox Explorer is a web-based application that provides a visual
 - **Get working POC in 1 week instead of 4-6 weeks**
 - **Best for:** Developers wanting to start coding NOW
 
-### 📋 Start Here (Full App Planning)
+### Start Here (Full App Planning)
 
 **[00-executive-summary.md](./00-executive-summary.md)**
 - High-level project overview
@@ -30,7 +30,7 @@ The NexHealth Sandbox Explorer is a web-based application that provides a visual
 - Success criteria and ROI
 - **Best for:** Management, stakeholders, quick overview
 
-### 🏗️ Architecture & Technology
+### Architecture & Technology
 
 **[01-technical-architecture.md](./01-technical-architecture.md)**
 - System architecture and design patterns
@@ -41,7 +41,7 @@ The NexHealth Sandbox Explorer is a web-based application that provides a visual
 - Deployment architecture
 - **Best for:** Technical leads, architects, senior developers
 
-### 🎨 Features & Design
+### Features & Design
 
 **[02-features-and-ui-specification.md](./02-features-and-ui-specification.md)**
 - Complete feature specifications
@@ -52,7 +52,7 @@ The NexHealth Sandbox Explorer is a web-based application that provides a visual
 - Future enhancement ideas
 - **Best for:** Designers, product managers, frontend developers
 
-### 🗺️ Implementation Plan (Full App)
+### Implementation Plan (Full App)
 
 **[03-implementation-roadmap.md](./03-implementation-roadmap.md)**
 - Week-by-week development plan (Phases 1-5) for full production app
@@ -68,7 +68,7 @@ The NexHealth Sandbox Explorer is a web-based application that provides a visual
 
 ### I want to understand...
 
-**"I want to build a POC quickly!"** ⚡
+**"I want to build a POC quickly!"**
 → Read: [Simplified POC Architecture](./04-simplified-poc-architecture.md)
 
 **"What is this project about?"**

@@ -4,17 +4,17 @@ React frontend for the NexHealth Explorer POC. Built with React, TypeScript, Vit
 
 ## Features
 
-- 📊 Dashboard with cached statistics
-- 👥 Patient list with search and pagination
-- 📅 Appointments list with filters
-- 👨‍⚕️ Provider directory
-- 🎨 Clean, responsive UI with TailwindCSS
-- ⚡ Fast development with Vite
-- 📝 Full TypeScript support
-- 🔄 Reusable component library
-- 🎣 Custom hooks (pagination, debouncing, stats)
-- 🔍 Search debouncing (~80% fewer API calls)
-- ⚡ Performance optimizations
+- Dashboard with cached statistics
+- Patient list with search and pagination
+- Appointments list with filters
+- Provider directory
+- Clean, responsive UI with TailwindCSS
+- Fast development with Vite
+- Full TypeScript support
+- Reusable component library
+- Custom hooks (pagination, debouncing, stats)
+- Search debouncing (~80% fewer API calls)
+- Performance optimizations
 
 ## Prerequisites
 

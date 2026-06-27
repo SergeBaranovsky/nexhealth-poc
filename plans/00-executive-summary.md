@@ -69,25 +69,24 @@ A web application with an intuitive UI that allows users to:
 
 ## Architecture Highlights
 
-```
-┌─────────────┐       HTTPS        ┌──────────────┐
-│   Browser   │ ←─────────────────→ │   Frontend   │
-│   (User)    │   React SPA        │   (Vercel)   │
-└─────────────┘                     └──────────────┘
-                                           │
-                                           │ HTTPS
-                                           ▼
-                                    ┌──────────────┐
-                                    │   Backend    │
-                                    │  (FastAPI)   │
-                                    └──────────────┘
-                                           │
-                                           │ HTTPS
-                                           ▼
-                                    ┌──────────────┐
-                                    │  NexHealth   │
-                                    │     API      │
-                                    └──────────────┘
+```mermaid
+---
+config:
+    markdownAutoWrap: false
+    theme: base
+    themeVariables:
+        primaryColor: lightblue
+        primaryBorderColor: steelblue
+        primaryTextColor: darkslategrey
+        lineColor: darkcyan
+        secondaryColor: whitesmoke
+        clusterBkg: aliceblue
+        clusterBorder: lightsteelblue
+---
+flowchart TD
+    Browser["Browser (User)"] <-->|"HTTPS — React SPA"| Frontend["Frontend (Vercel)"]
+    Frontend -->|HTTPS| Backend["Backend (FastAPI)"]
+    Backend -->|HTTPS| NexHealth["NexHealth API"]
 ```
 
 **Key Benefits:**
